@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"
+      integrity="sha512-0zGLOFv/+OQ6YfVCSGDQWhrDRx0ONmBqWvs3gI4olm8i6xtKoG1FhEnB4eTaWCVnojyfUDgE8Izeln+mAJAkFA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      // SECCIÓN TORTUGA:
+      let x, y; // la posición actual de la tortuga
+      let currentangle = 0; // hacia dónde apunta la tortuga
+      let step = Math.random()>.5 ?20: 10; // cuánto se mueve la tortuga en cada 'F'
+      let angle = 90; // cuánto gira la tortuga con un '-' or '+'
+
+      // SECCIÓN LINDENMAYER (SISTEMAS-L)
+      let thestring = "A"; // "axioma" o inicio de la cadena
+      let numloops = 5; // cuántas iteraciones a pre-computar
+      let therules = []; // arreglo para las reglas
+      therules[0] = ["A", "-BF+AFA+FB-"]; // primera regla
+      therules[1] = ["B", "+AF-BFB-FA+"]; // segunda regla
+
+      let whereinstring = 0; // dónde estamos en el sistema-L
+      let startFromCorner = true; // Controla si empezamos desde la esquina inferior izquierda (true) o la esquina superior derecha (false)
+
+      function setup() {
+        createCanvas(window.innerWidth, window.innerHeight);
+        background(255);
+        stroke(0, 0, 0, 255);
+
+        if (startFromCorner) {
+          setup1();
+        } else {
+          setup2();
+        }
+
+        // CALCULAR EL SISTEMA-L
+        for (let i = 0; i < numloops; i++) {
+          thestring = lindenmayer(thestring);
+        }
+      }
+
+      function setup1() {
+        // Inicializar la posición x e y en la esquina inferior izquierda
+        x = 0;
+        y = height - 1;
+        currentangle = 0; // Apuntar hacia arriba
+      }
+
+      function setup2() {
+        // Inicializar la posición x e y en la esquina superior derecha
+        x = width - 1;
+        y = 0;
+        currentangle = 180; // Apuntar hacia abajo
+      }
+
+      function draw() {
+        // Dibujar el caracter actual en la pantalla
+        drawIt(thestring[whereinstring]);
+
+        // Incrementar el punto de donde leemos la cadena.
+        // Si sobrepasamos el final, volver al inicio.
+        whereinstring++;
+        if (whereinstring > thestring.length - 1) whereinstring = 0;
+      }
+
+      // Interpretar un sistema-L
+      function lindenmayer(s) {
+        let outputstring = ""; // Inicializar una cadena de salida en blanco
+
+        // Iterar a lo largo de las 'reglas' buscando coincidencias de símbolo:
+        for (let i = 0; i < s.length; i++) {
+          let ismatch = 0; // Por defecto, sin coincidencia
+          for (let j = 0; j < therules.length; j++) {
+            if (s[i] == therules[j][0]) {
+              outputstring += therules[j][1]; // Escribir substitución
+              ismatch = 1; // Si tenemos una coincidencia, no copiemos el símbolo
+              break; // Salir de este bucle for()
+            }
+          }
+          // Si nada coincide, simplemente copia el símbolo.
+          if (ismatch == 0) outputstring += s[i];
+        }
+
+        return outputstring; // Enviar la cadena modificada
+      }
+
+      // Esta es una función que dibuja los comandos de la tortuga
+      function drawIt(k) {
+        if (k == "F") {
+          // Dibujar hacia adelante
+          // De polar a cartesiano basado en paso y ángulo actual:
+          let x1 = x + step * cos(radians(currentangle));
+          let y1 = y + step * sin(radians(currentangle));
+          line(x, y, x1, y1); // Conectar el anterior y el nuevo
+
+          // Actualizar la posición de la tortuga:
+          x = x1;
+          y = y1;
+        } else if (k == "+") {
+          currentangle += angle; // Doblar hacia la izquierda
+        } else if (k == "-") {
+          currentangle -= angle; // Doblar hacia la derecha
+        }
+
+        // Valores aleatorios de color:
+        let r = random(128, 255);
+        let g = random(0, 192);
+        let b = random(0, 50);
+        let a = random(50, 100);
+
+        // Escoger una distribución gaussiana (D&D) para el radio:
+        let radius = 0;
+        radius += random(0, 15);
+        radius += random(0, 15);
+        radius += random(0, 15);
+        radius = radius / 3;
+
+        // Dibujar:
+        fill(r, g, b, a);
+        ellipse(x, y, radius, radius);
+      }
+    </script>
+  </body>
+</html>
